@@ -15,9 +15,16 @@ WHERE year_of_public BETWEEN 2018 AND 2020;
 SELECT name FROM Artist 
 WHERE name  NOT LIKE '% %';
 
---5)Название трека, содержащее слово «мой» или «мой»
+--5)Название трека, содержащее слово «мой» или «my»
 SELECT name FROM Song 
-WHERE LOWER(name) LIKE '%мой%';
+WHERE name ILIKE 'мой %'
+OR name ILIKE '% мой'
+OR name ILIKE '% мой %'
+OR name ILIKE 'мой'
+OR name ILIKE 'my %'
+OR name ILIKE '% my'
+OR name ILIKE '% my %'
+OR name ILIKE 'my';
 
 --TASK 3
 --1)Количество исполнителей в каждом жанре.
@@ -26,10 +33,9 @@ JOIN genre_artist ga ON id = ga.genre_id
 GROUP BY name;
 
 --2)Количество треков, вошедших в альбомы 2019–2020 годов
-SELECT albom.name, albom.release_year, count(s.albom_id) FROM albom 
-JOIN song s ON albom.id = s.albom_id
-WHERE albom.release_year BETWEEN 2019 AND 2020
-GROUP BY albom.name, albom.release_year;
+SELECT  count(song.id) FROM song 
+JOIN albom a ON albom_id = a.id
+WHERE a.release_year BETWEEN 2019 AND 2020;
 
 --3)Средняя продолжительность треков по каждому альбому.
 SELECT albom.name, AVG(s.duration) FROM albom
@@ -37,10 +43,13 @@ JOIN song s ON albom.id = s.albom_id
 GROUP BY albom.name;
 
 --4)Все исполнители, которые не выпустили альбомы в 2020 году.
-SELECT artist.name, albom.release_year FROM artist 
-JOIN artist_albom aa ON id = aa.artist_id
-JOIN albom ON aa.albom_id = albom.id
-WHERE albom.release_year != 2020; 
+SELECT artist.name FROM artist
+where artist.name not in (
+	SELECT artist.name FROM artist
+	JOIN artist_albom aa ON id = aa.artist_id
+	JOIN albom ON aa.albom_id = albom.id
+	WHERE albom.release_year = 2020
+); 
 
 --5)Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами)
 SELECT collections.name FROM collections 
@@ -59,7 +68,7 @@ SELECT albom.name FROM albom
 JOIN artist_albom aa ON albom.id = aa.albom_id
 JOIN artist ON aa.artist_id = artist.id
 JOIN genre_artist ON artist.id = genre_artist.artist_id 
-GROUP BY albom.name
+GROUP BY albom.name, genre_artist.artist_id
 HAVING count(genre_artist.genre_id) > 1;
 
 --2)Наименования треков, которые не включены в сборники.
@@ -83,5 +92,3 @@ HAVING count(song.id) in
 	group by albom.name
 	order by count(song.id)
 	limit 1)
-
-
